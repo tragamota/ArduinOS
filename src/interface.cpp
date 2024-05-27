@@ -22,6 +22,8 @@ bool ReadUserInterface(char *commandBuffer, int bufferLength, int *position)
             if(*position > 0) {
                 (*position)--;
                 Serial.print('\b');
+                Serial.print(' ');
+                Serial.print('\b');
             }
             continue;
         }

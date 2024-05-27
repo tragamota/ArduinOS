@@ -1,11 +1,13 @@
 #include <Arduino.h>
-#include <interface.h>
+#include "interface.h"
+#include "filesystem.h"
 
 static char commandBuffer[COMMAND_BUFF_SIZE]; 
 static int position = 0;
 
 void setup() {
   InitializeInterface();
+  InitializeFilesystem();
 }
 
 void loop() {

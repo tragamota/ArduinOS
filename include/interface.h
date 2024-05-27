@@ -9,9 +9,7 @@ typedef struct {
 } commandType ;
 
 void InitializeInterface();
-bool ReadUserInterface(char*, int, int*);
-
 void FlushStream();
-
+bool ReadUserInterface(char*, int, int*);
 
 #endif // INTERFACE_H
