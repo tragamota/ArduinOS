@@ -1,18 +1,20 @@
 #include <Arduino.h>
+#include <interface.h>
 
-// put function declarations here:
-int myFunction(int, int);
+static char commandBuffer[COMMAND_BUFF_SIZE]; 
+static int position = 0;
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  InitializeInterface();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  if(ReadUserInterface(commandBuffer, COMMAND_BUFF_SIZE, &position)) {
+    // Look for the right command if it is available
+
+
+    FlushStream();
+    Serial.print("\nArduinOS> ");
+  }
 }
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
-}
