@@ -27,9 +27,6 @@ void InitializeFilesystem()
             EEPROM.put(i * sizeof(FATEntry) + 1, emptyFatEntry);
         }
     }
-
-    Serial.print(noOfFiles);
-    Serial.println(" Files found");
 }
 
 int8_t HasEmptyFATEntry()

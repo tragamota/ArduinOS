@@ -28,7 +28,7 @@ bool ReadUserInterface(char *commandBuffer, int bufferLength, int *position)
             continue;
         }
 
-        if (incomingCharacter == '\n' || (*position) >= bufferLength - 1)
+        if (incomingCharacter == '\n' || incomingCharacter == '\t' || incomingCharacter == ' ' || (*position) >= bufferLength - 1)
         {
             commandBuffer[(*position)] = '\0';
             *position = 0;
