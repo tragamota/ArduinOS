@@ -5,6 +5,7 @@
 void InitializeInterface()
 {
     Serial.begin(19200);
+    Serial.setTimeout(-1);
     Serial.println("ArduinOS 1.0 ready.");
     Serial.print("ArduinOS> ");
 }
@@ -30,7 +31,7 @@ bool ReadUserInterface(char *commandBuffer, int bufferLength, int *position)
 
         if (incomingCharacter == '\n' || incomingCharacter == '\t' || incomingCharacter == ' ' || (*position) >= bufferLength - 1)
         {
-            commandBuffer[(*position)] = '\0';
+            commandBuffer[*position] = '\0';
             *position = 0;
             return true;
         }

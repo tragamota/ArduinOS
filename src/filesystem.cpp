@@ -17,7 +17,7 @@ void InitializeFilesystem()
         EEPROM.write(0, FAT_MAGIC_NUMBER);
         EEPROM.write(161, 0);
 
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < FAT_FILES; i++) {
             FATEntry emptyFatEntry;
 
             emptyFatEntry.name[0] = '\0';
@@ -29,7 +29,32 @@ void InitializeFilesystem()
     }
 }
 
-int8_t HasEmptyFATEntry()
+int8_t FindEntryByFilename(char* fileName)
 {
-    return false;
+    FATEntry fileEntry;
+    
+    for(int i = 0; i < noOfFiles; i++) {
+        EEPROM.get(i * sizeof(FATEntry) + 1, fileEntry);
+
+        if(strcmp(fileName, fileEntry.name) == 0) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+int8_t GetEmptyFATEntryIndex()
+{
+    FATEntry fileEntry;
+    
+    for(int i = 0; i < FAT_FILES; i++) {
+        EEPROM.get(i * sizeof(FATEntry) + 1, fileEntry);
+
+        if(fileEntry.length == 0) {
+            return i;
+        }
+    }
+
+    return -1;
 }

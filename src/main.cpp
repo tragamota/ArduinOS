@@ -20,7 +20,7 @@ static CommandType commands[] = {
     {"kill", &Kill}
 };
 
-static int commandBufferSize = sizeof(commands) / sizeof(CommandType);
+static int totalCommands = sizeof(commands) / sizeof(CommandType);
 
 void setup() {
   InitializeInterface();
@@ -29,13 +29,13 @@ void setup() {
 
 void loop() {
   if(ReadUserInterface(commandInputBuffer, COMMAND_BUFF_SIZE, &position)) {
-    // Look for the right command if it is available
-    auto command = FindCommandFunc(commands, commandBufferSize, commandInputBuffer);
+    Serial.println();
+    auto command = FindCommandFunc(commands, totalCommands, commandInputBuffer);
 
     if(command != nullptr) {
       command->func();
     }
-s
+
     FlushStream();
     Serial.print("\nArduinOS> ");
   }
