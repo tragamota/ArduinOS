@@ -29,7 +29,6 @@ void setup() {
 
 void loop() {
   if(ReadUserInterface(commandInputBuffer, COMMAND_BUFF_SIZE, &position)) {
-    Serial.println();
     auto command = FindCommandFunc(commands, totalCommands, commandInputBuffer);
 
     if(command != nullptr) {
@@ -37,7 +36,7 @@ void loop() {
     }
 
     FlushStream();
-    Serial.print("\nArduinOS> ");
+    Serial.print(F("\nArduinOS> "));
   }
 }
 
