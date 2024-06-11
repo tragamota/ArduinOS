@@ -1,5 +1,8 @@
 #include "process.h"
 
+#include "ram.h"
+#include <instructions.h>
+
 Process *GetProcess(uint8_t processId)
 {
     for (int i = 0; i < PROCESS_SLOTS; i++)
@@ -14,7 +17,7 @@ Process *GetProcess(uint8_t processId)
     return nullptr;
 }
 
-void AddProcess(Process* process)
+void AddProcess(Process *process)
 {
     Serial.println("Adding process");
 
@@ -23,10 +26,12 @@ void AddProcess(Process* process)
 
     int slotIndex = 0;
 
-    for(int i = 0; i < PROCESS_SLOTS; i++) {
-        Process* process = &(processes[i]);
+    for (int i = 0; i < PROCESS_SLOTS; i++)
+    {
+        Process *process = &(processes[i]);
 
-        if(process[i].state == 0) {
+        if (process[i].state == 0)
+        {
             slotIndex = i;
             break;
         }
@@ -40,7 +45,7 @@ void AddProcess(Process* process)
     Serial.println(noOfProcesses);
 }
 
-void PauseProcess(Process* process)
+void PauseProcess(Process *process)
 {
     process->state = 2;
 
@@ -48,7 +53,7 @@ void PauseProcess(Process* process)
     Serial.println(process->id);
 }
 
-void ResumeProcess(Process* process)
+void ResumeProcess(Process *process)
 {
     process->state = 1;
 
@@ -56,11 +61,11 @@ void ResumeProcess(Process* process)
     Serial.println(process->id);
 }
 
-void KillProcess(Process* process)
+void KillProcess(Process *process)
 {
     process->state = 0;
 
-    // TODO: REMOVE ALL VARIABLES FROM RAM
+    CleanProcessVariables(process->id);
 
     noOfProcesses--;
 
@@ -81,7 +86,6 @@ void PrintProcesses()
 
         if (process->state == 0)
             continue;
-        
 
         Serial.print(F("Process ID: "));
         Serial.println(process->id);
@@ -90,5 +94,20 @@ void PrintProcesses()
         Serial.print(F("Process state: "));
         Serial.println(process->state);
         Serial.println(process->state == 1 ? "RUNNING" : "SUSPENDED");
+    }
+}
+
+void runProcesses()
+{
+    for (int i = 0; i < PROCESS_SLOTS; i++)
+    {
+        Process *process = &(processes[i]);
+
+        if (process->state != 1)
+        {
+            continue;
+        }
+
+        Execute(process);
     }
 }

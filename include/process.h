@@ -33,4 +33,6 @@ void KillProcess(Process*);
 bool HasRunningProcesses();
 void PrintProcesses();
 
+void runProcesses();
+
 #endif // PROCESS_H
