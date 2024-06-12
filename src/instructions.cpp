@@ -125,15 +125,24 @@ void FLOAT(Process *proc)
 
 void STRING(Process *proc)
 {
-  // int index = 0;
-  // while (EEPROM.read(proc->pc++) != 0) {
-  //   data[index] = (char)EEPROM.read(proc->pc);
-  //   proc->pc++;
-  //   index++;
-  // }
-  // data[index] = 0;
-  // proc->pc++;
-  // proc->stack.pushString(data);
+  uint8_t *stringData;
+  int stringLength = 0;
+
+  while (EEPROM.read(proc->pc + stringLength) != 0)
+  {
+    stringLength++;
+  }
+
+  stringData = new uint8_t[stringLength + 1];
+
+  for (int i = 0; i < stringLength + 1; i++)
+  {
+    stringData[i] = EEPROM.read(proc->pc++);
+  }
+
+  PushString(&(proc->stack), (char *)stringData);
+
+  delete[] stringData;
 }
 
 void SET(Process *proc)
@@ -253,21 +262,30 @@ void PLUS(Process *proc)
   else if (type1 == 's')
   {
     char *data1 = PopString(&(proc->stack));
+
     type2 = PeekType(&(proc->stack));
+
     if (type2 == 's')
     {
       char *data2 = PopString(&(proc->stack));
-      char *data3 = (char *)malloc(strlen(data1) + strlen(data2) + 1);
+      char *data3 = new char(strlen(data1) + strlen(data2) + 1);
+
       strcpy(data3, data1);
       strcat(data3, data2);
+
       PushString(&(proc->stack), data3);
-      free(data3);
+
+      delete[] data2;
+      delete[] data3;
     }
     else
     {
+
       Serial.println(F("Plus does not support two different types"));
       STOP(proc);
     }
+
+    delete[] data1;
   }
 }
 
@@ -572,6 +590,7 @@ void EQUALS(Process *proc)
   {
     char *data1 = PopString(&(proc->stack));
     type2 = PeekType(&(proc->stack));
+
     if (type2 == 's')
     {
       char *data2 = PopString(&(proc->stack));
@@ -582,6 +601,9 @@ void EQUALS(Process *proc)
       Serial.println(F("Equals does not support two different types"));
       STOP(proc);
     }
+
+    delete[] data2;
+    delete[] data1;
   }
 }
 
@@ -642,12 +664,16 @@ void NOTEQUALS(Process *proc)
     {
       char *data2 = PopString(&(proc->stack));
       PushChar(&(proc->stack), strcmp(data1, data2) != 0);
+
+      delete[] data2;
     }
     else
     {
       Serial.println(F("Not equals does not support two different types"));
       STOP(proc);
     }
+
+    delete[] data1;
   }
 }
 
@@ -1995,7 +2021,11 @@ void PRINT(Process *proc)
   }
   else if (type == 's')
   {
-    Serial.print(PopString(&(proc->stack)));
+    char *printString = PopString(&(proc->stack));
+
+    Serial.print(printString);
+
+    delete[] printString;
   }
 }
 
@@ -2071,6 +2101,8 @@ void OPEN(Process *proc)
         proc->fp = fat->position;
       }
     }
+
+    delete[] data;
   }
 }
 
@@ -2103,10 +2135,10 @@ void WRITE(Process *proc)
   else if (type == 'f')
   {
     float data = PopFloat(&(proc->stack));
-    
+
     uint8_t *floatBytes[4];
     memcpy(floatBytes, &data, 4);
-    
+
     for (int i = 0; i < 4; i++)
     {
       EEPROM.put(proc->fp, floatBytes);
@@ -2122,6 +2154,8 @@ void WRITE(Process *proc)
       EEPROM.put(proc->fp, data[i]);
       proc->fp++;
     }
+
+    delete[] data;
   }
   else
   {
@@ -2157,17 +2191,24 @@ void READFLOAT(Process *proc)
 
 void READSTRING(Process *proc)
 {
-  char *data;
-  int index = 0;
-  while (EEPROM.read(proc->fp) != '\0')
+  uint8_t *stringData;
+  int stringLength = 0;
+
+  while (EEPROM.read(proc->fp + stringLength) != 0)
   {
-    data[index] = EEPROM.read(proc->fp);
-    proc->fp++;
-    index++;
+    stringLength++;
   }
-  data[index] = '\0';
-  PushString(&(proc->stack), data);
-  proc->fp++;
+
+  stringData = new uint8_t[stringLength + 1];
+
+  for (int i = 0; i < stringLength + 1; i++)
+  {
+    stringData[i] = EEPROM.read(proc->fp++);
+  }
+
+  PushString(&(proc->stack), (char *)stringData);
+
+  delete[] stringData;
 }
 
 void READCHAR(Process *proc)
@@ -2367,6 +2408,7 @@ void FORK(Process *proc)
 
       PushInt(&(proc->stack), forkProcess.id);
     }
+    delete[] data;
   }
   else
   {

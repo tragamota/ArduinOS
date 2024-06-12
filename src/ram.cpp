@@ -77,6 +77,9 @@ void StoreVariable(uint8_t name, uint8_t id, Stack *stack)
         {
             data[i] = stackString[i];
         }
+
+        delete [] stackString;
+        
         break;
     }
 

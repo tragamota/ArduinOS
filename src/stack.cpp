@@ -10,7 +10,8 @@ uint8_t PopByte(Stack *stack)
     return stack->bytes[--stack->sp];
 }
 
-uint8_t PeekType(Stack* stack) {
+uint8_t PeekType(Stack *stack)
+{
     uint8_t type = PopByte(stack);
 
     PushByte(stack, type);
@@ -18,11 +19,12 @@ uint8_t PeekType(Stack* stack) {
     return type;
 }
 
-void PushString(Stack* stack, char* value) 
+void PushString(Stack *stack, char *value)
 {
     int stringLength = strlen(value);
 
-    for(int i = 0; i < stringLength + 1; i++) {
+    for (int i = 0; i < stringLength + 1; i++)
+    {
         PushByte(stack, value[i]);
     }
 
@@ -46,36 +48,38 @@ void PushInt(Stack *stack, int value)
 void PushFloat(Stack *stack, float value)
 {
     byte b[4];
-    
+
     memcpy(b, &value, sizeof(float));
-    
-    for(int i = sizeof(float) - 1; i >= 0; i--) {
+
+    for (int i = sizeof(float) - 1; i >= 0; i--)
+    {
         PushByte(stack, b[i]);
     }
 
     PushByte(stack, 'f');
 }
 
-char PopChar(Stack* stack)
+char PopChar(Stack *stack)
 {
     PopByte(stack);
     return PopByte(stack);
 }
 
-int PopInt(Stack* stack)
+int PopInt(Stack *stack)
 {
     PopByte(stack);
-    
+
     return word(PopByte(stack), PopByte(stack));
 }
 
-float PopFloat(Stack* stack)
+float PopFloat(Stack *stack)
 {
     float value;
     byte b[4];
 
     PopByte(stack);
-    for(int i = 0; i < sizeof(float); i++) {
+    for (int i = 0; i < sizeof(float); i++)
+    {
         b[i] = PopByte(stack);
     }
 
@@ -84,6 +88,16 @@ float PopFloat(Stack* stack)
     return value;
 }
 
-char* PopString(Stack*) {
-    
+char* PopString(Stack* stack)
+{
+    PopByte(stack);
+
+    int length = PopByte(stack);
+    char* string = new char[length];
+
+    for(int i = 0; i < length; i++) {
+        string[i] = (char) PopByte(stack);
+    }
+
+    return string;
 }
