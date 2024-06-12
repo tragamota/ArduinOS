@@ -86,8 +86,8 @@ void Retrieve()
         return;
     }
 
-    auto fileFAT = ReadFatEntry(fileIndex);
-    auto fileData = ReadFatData(fileFAT->position, fileFAT->length);
+    const auto fileFAT = ReadFatEntry(fileIndex);
+    const auto fileData = ReadFatData(fileFAT->position, fileFAT->length);
 
     Serial.print(F("File found at index "));
     Serial.println(fileIndex);

@@ -3,6 +3,7 @@
 #include "command.h"
 #include "interface.h"
 #include "filesystem.h"
+#include "process.h"
 
 static char commandInputBuffer[COMMAND_BUFF_SIZE]; 
 static int position = 0;
@@ -38,5 +39,7 @@ void loop() {
     FlushStream();
     Serial.print(F("\nArduinOS> "));
   }
+
+  RunProcesses();
 }
 

@@ -83,3 +83,7 @@ float PopFloat(Stack* stack)
 
     return value;
 }
+
+char* PopString(Stack*) {
+    
+}

@@ -7,6 +7,7 @@
 #define FAT_FILES 10
 
 static EERef noOfFiles = EEPROM[161];
+
 const uint8_t FAT_MAGIC_NUMBER = 0x20;
 
 typedef struct FAT {

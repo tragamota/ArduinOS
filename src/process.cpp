@@ -97,7 +97,7 @@ void PrintProcesses()
     }
 }
 
-void runProcesses()
+void RunProcesses()
 {
     for (int i = 0; i < PROCESS_SLOTS; i++)
     {
