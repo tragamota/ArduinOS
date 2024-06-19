@@ -5,6 +5,8 @@
 #include "filesystem.h"
 #include "process.h"
 
+#include "ram.h"
+
 static char commandInputBuffer[COMMAND_BUFF_SIZE]; 
 static int position = 0;
 

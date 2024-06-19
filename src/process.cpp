@@ -19,8 +19,6 @@ Process *GetProcess(uint8_t processId)
 
 void AddProcess(Process *process)
 {
-    Serial.println("Adding process");
-
     process->state = 1;
     process->id = processCounter;
 
@@ -28,9 +26,9 @@ void AddProcess(Process *process)
 
     for (int i = 0; i < PROCESS_SLOTS; i++)
     {
-        Process *process = &(processes[i]);
+        Process *SearchProcess = &(processes[i]);
 
-        if (process[i].state == 0)
+        if (SearchProcess->state == 0)
         {
             slotIndex = i;
             break;
@@ -38,11 +36,10 @@ void AddProcess(Process *process)
     }
 
     processes[slotIndex] = *process;
+    processes[slotIndex].stack.sp = 0;
 
     noOfProcesses++;
     processCounter++;
-
-    Serial.println(noOfProcesses);
 }
 
 void PauseProcess(Process *process)
@@ -93,7 +90,7 @@ void PrintProcesses()
         Serial.println(process->name);
         Serial.print(F("Process state: "));
         Serial.println(process->state);
-        Serial.println(process->state == 1 ? "RUNNING" : "SUSPENDED");
+        Serial.println(process->state == 1 ? F("RUNNING") : F("SUSPENDED"));
     }
 }
 
@@ -102,7 +99,7 @@ void RunProcesses()
     for (int i = 0; i < PROCESS_SLOTS; i++)
     {
         Process *process = &(processes[i]);
-
+        
         if (process->state != 1)
         {
             continue;

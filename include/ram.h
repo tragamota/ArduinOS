@@ -3,8 +3,8 @@
 
 #include "stack.h"
 
-#define RAM_SIZE 256
-#define MEMORY_SLOTS 25
+#define RAM_SIZE 200
+#define MEMORY_SLOTS 20
 
 typedef struct {
   char name = 0;
@@ -16,8 +16,6 @@ typedef struct {
 
 static uint8_t RAM[RAM_SIZE];
 static Memory memoryMapping[MEMORY_SLOTS];
-
-static int noOfVars = 0;
 
 void StoreVariable(uint8_t, uint8_t, Stack*);
 void RetrieveVariable(uint8_t, uint8_t, Stack*);

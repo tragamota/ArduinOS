@@ -78,15 +78,30 @@ static Instruction instructionList[] = {
 
 Instruction *FindInstruction(uint8_t functionCode)
 {
-  return &(instructionList[functionCode]);
+  for (int i = 0; i < sizeof(instructionList) / sizeof(Instruction); i++)
+  {
+    auto instruct = &(instructionList[i]);
+    if (instruct->name == functionCode)
+    {
+      return instruct;
+    }
+  }
+
+  return nullptr;
 }
 
 void Execute(Process *process)
 {
-  auto instructionCode = EEPROM[process->pc];
+  auto instructionCode = EEPROM[process->pc++];
   auto instruction = FindInstruction(instructionCode);
 
-  instruction->function(process);
+  if (instruction != nullptr)
+  {
+    instruction->function(process);
+    return;
+  }
+
+  KillProcess(process);
 }
 
 void STOP(Process *process)
@@ -104,6 +119,7 @@ void INT(Process *proc)
 {
   uint8_t highByte = EEPROM.read(proc->pc++);
   uint8_t lowByte = EEPROM.read(proc->pc++);
+
   PushInt(&(proc->stack), word(highByte, lowByte));
 }
 
@@ -177,7 +193,6 @@ void INCREMENT(Process *proc)
   }
   else
   {
-    Serial.println(F("Type not supported for increment"));
     STOP(proc);
   }
 }
@@ -202,7 +217,6 @@ void DECREMENT(Process *proc)
   }
   else
   {
-    Serial.println(F("Type not supported for decrement"));
     STOP(proc);
   }
 }
@@ -223,7 +237,6 @@ void PLUS(Process *proc)
     }
     else
     {
-      Serial.println(F("Plus does not support two different types"));
       STOP(proc);
     }
   }
@@ -239,7 +252,6 @@ void PLUS(Process *proc)
     }
     else
     {
-      Serial.println(F("Plus does not support two different types"));
       STOP(proc);
     }
   }
@@ -255,7 +267,6 @@ void PLUS(Process *proc)
     }
     else
     {
-      Serial.println(F("Plus does not support two different types"));
       STOP(proc);
     }
   }
@@ -268,7 +279,7 @@ void PLUS(Process *proc)
     if (type2 == 's')
     {
       char *data2 = PopString(&(proc->stack));
-      char *data3 = new char(strlen(data1) + strlen(data2) + 1);
+      char *data3 = new char[strlen(data1) + strlen(data2) + 1];
 
       strcpy(data3, data1);
       strcat(data3, data2);
@@ -280,8 +291,6 @@ void PLUS(Process *proc)
     }
     else
     {
-
-      Serial.println(F("Plus does not support two different types"));
       STOP(proc);
     }
 
@@ -305,7 +314,6 @@ void MINUS(Process *proc)
     }
     else
     {
-      Serial.println(F("Minus does not support two different types"));
       STOP(proc);
     }
   }
@@ -321,7 +329,6 @@ void MINUS(Process *proc)
     }
     else
     {
-      Serial.println(F("Minus does not support two different types"));
       STOP(proc);
     }
   }
@@ -337,13 +344,12 @@ void MINUS(Process *proc)
     }
     else
     {
-      Serial.println(F("Minus does not support two different types"));
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("Minus does not support two different types"));
+
     STOP(proc);
   }
 }
@@ -364,7 +370,6 @@ void TIMES(Process *proc)
     }
     else
     {
-      Serial.println(F("Times does not support two different types"));
       STOP(proc);
     }
   }
@@ -380,7 +385,6 @@ void TIMES(Process *proc)
     }
     else
     {
-      Serial.println(F("Times does not support two different types"));
       STOP(proc);
     }
   }
@@ -396,13 +400,11 @@ void TIMES(Process *proc)
     }
     else
     {
-      Serial.println(F("Times does not support two different types"));
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("Times does not support two different types"));
     STOP(proc);
   }
 }
@@ -423,7 +425,6 @@ void DIVIDE(Process *proc)
     }
     else
     {
-      Serial.println(F("Divide does not support two different types"));
       STOP(proc);
     }
   }
@@ -439,7 +440,6 @@ void DIVIDE(Process *proc)
     }
     else
     {
-      Serial.println(F("Divide does not support two different types"));
       STOP(proc);
     }
   }
@@ -455,13 +455,11 @@ void DIVIDE(Process *proc)
     }
     else
     {
-      Serial.println(F("Divide does not support two different types"));
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("Divide does not support two different types"));
     STOP(proc);
   }
 }
@@ -482,7 +480,6 @@ void MODULO(Process *proc)
     }
     else
     {
-      Serial.println(F("Modulo does not support two different types"));
       STOP(proc);
     }
   }
@@ -498,13 +495,11 @@ void MODULO(Process *proc)
     }
     else
     {
-      Serial.println(F("Modulo does not support two different types"));
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("Modulo does not support two different types"));
     STOP(proc);
   }
 }
@@ -532,7 +527,6 @@ void UNARYMINUS(Process *proc)
   }
   else
   {
-    Serial.println(F("Unary minus does not support this type"));
     STOP(proc);
   }
 }
@@ -552,7 +546,6 @@ void EQUALS(Process *proc)
     }
     else
     {
-      Serial.println(F("Equals does not support two different types"));
       STOP(proc);
     }
   }
@@ -567,7 +560,7 @@ void EQUALS(Process *proc)
     }
     else
     {
-      Serial.println(F("Equals does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -582,7 +575,7 @@ void EQUALS(Process *proc)
     }
     else
     {
-      Serial.println(F("Equals does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -595,14 +588,15 @@ void EQUALS(Process *proc)
     {
       char *data2 = PopString(&(proc->stack));
       PushChar(&(proc->stack), strcmp(data1, data2) == 0);
+
+      delete[] data2;
     }
     else
     {
-      Serial.println(F("Equals does not support two different types"));
+
       STOP(proc);
     }
 
-    delete[] data2;
     delete[] data1;
   }
 }
@@ -622,7 +616,7 @@ void NOTEQUALS(Process *proc)
     }
     else
     {
-      Serial.println(F("Not equals does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -637,7 +631,7 @@ void NOTEQUALS(Process *proc)
     }
     else
     {
-      Serial.println(F("Not equals does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -652,7 +646,7 @@ void NOTEQUALS(Process *proc)
     }
     else
     {
-      Serial.println(F("Not equals does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -669,7 +663,7 @@ void NOTEQUALS(Process *proc)
     }
     else
     {
-      Serial.println(F("Not equals does not support two different types"));
+
       STOP(proc);
     }
 
@@ -692,7 +686,6 @@ void LESSTHEN(Process *proc)
     }
     else
     {
-      Serial.println(F("Less than does not support two different types"));
       STOP(proc);
     }
   }
@@ -707,7 +700,6 @@ void LESSTHEN(Process *proc)
     }
     else
     {
-      Serial.println(F("Less than does not support two different types"));
       STOP(proc);
     }
   }
@@ -722,13 +714,12 @@ void LESSTHEN(Process *proc)
     }
     else
     {
-      Serial.println(F("Less than does not support two different types"));
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("Less than does not support this type"));
+
     STOP(proc);
   }
 }
@@ -748,7 +739,6 @@ void LESSTHENOREQUALS(Process *proc)
     }
     else
     {
-      Serial.println(F("Less than or equals does not support two different types"));
       STOP(proc);
     }
   }
@@ -763,7 +753,7 @@ void LESSTHENOREQUALS(Process *proc)
     }
     else
     {
-      Serial.println(F("Less than or equals does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -778,13 +768,13 @@ void LESSTHENOREQUALS(Process *proc)
     }
     else
     {
-      Serial.println(F("Less than or equals does not support two different types"));
+
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("Less than or equals does not support this type"));
+
     STOP(proc);
   }
 }
@@ -804,7 +794,7 @@ void GREATERTHEN(Process *proc)
     }
     else
     {
-      Serial.println(F("Greater than does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -819,7 +809,7 @@ void GREATERTHEN(Process *proc)
     }
     else
     {
-      Serial.println(F("Greater than does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -834,13 +824,13 @@ void GREATERTHEN(Process *proc)
     }
     else
     {
-      Serial.println(F("Greater than does not support two different types"));
+
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("Greater than does not support this type"));
+
     STOP(proc);
   }
 }
@@ -860,7 +850,7 @@ void GREATERTHENOREQUALS(Process *proc)
     }
     else
     {
-      Serial.println(F("Greater than or equals does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -875,7 +865,7 @@ void GREATERTHENOREQUALS(Process *proc)
     }
     else
     {
-      Serial.println(F("Greater than or equals does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -890,13 +880,13 @@ void GREATERTHENOREQUALS(Process *proc)
     }
     else
     {
-      Serial.println(F("Greater than or equals does not support two different types"));
+
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("Greater than or equals does not support this type"));
+
     STOP(proc);
   }
 }
@@ -916,7 +906,7 @@ void LOGICALAND(Process *proc)
     }
     else
     {
-      Serial.println(F("Logical AND does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -931,7 +921,7 @@ void LOGICALAND(Process *proc)
     }
     else
     {
-      Serial.println(F("Logical AND does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -946,13 +936,13 @@ void LOGICALAND(Process *proc)
     }
     else
     {
-      Serial.println(F("Logical AND does not support two different types"));
+
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("Logical AND does not support this type"));
+
     STOP(proc);
   }
 }
@@ -972,7 +962,7 @@ void LOGICALOR(Process *proc)
     }
     else
     {
-      Serial.println(F("Logical OR does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -987,7 +977,7 @@ void LOGICALOR(Process *proc)
     }
     else
     {
-      Serial.println(F("Logical OR does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -1002,13 +992,13 @@ void LOGICALOR(Process *proc)
     }
     else
     {
-      Serial.println(F("Logical OR does not support two different types"));
+
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("Logical OR does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1028,7 +1018,7 @@ void LOGICALXOR(Process *proc)
     }
     else
     {
-      Serial.println(F("Logical XOR does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -1043,7 +1033,7 @@ void LOGICALXOR(Process *proc)
     }
     else
     {
-      Serial.println(F("Logical XOR does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -1058,13 +1048,13 @@ void LOGICALXOR(Process *proc)
     }
     else
     {
-      Serial.println(F("Logical XOR does not support two different types"));
+
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("Logical XOR does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1089,7 +1079,7 @@ void LOGICALNOT(Process *proc)
   }
   else
   {
-    Serial.println(F("Logical NOT does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1109,7 +1099,7 @@ void BITWISEAND(Process *proc)
     }
     else
     {
-      Serial.println(F("Bitwise AND does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -1124,13 +1114,13 @@ void BITWISEAND(Process *proc)
     }
     else
     {
-      Serial.println(F("Bitwise AND does not support two different types"));
+
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("Bitwise AND does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1150,7 +1140,7 @@ void BITWISEOR(Process *proc)
     }
     else
     {
-      Serial.println(F("Bitwise OR does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -1165,13 +1155,13 @@ void BITWISEOR(Process *proc)
     }
     else
     {
-      Serial.println(F("Bitwise OR does not support two different types"));
+
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("Bitwise OR does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1191,7 +1181,7 @@ void BITWISEXOR(Process *proc)
     }
     else
     {
-      Serial.println(F("Bitwise XOR does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -1206,13 +1196,13 @@ void BITWISEXOR(Process *proc)
     }
     else
     {
-      Serial.println(F("Bitwise XOR does not support two different types"));
+
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("Bitwise XOR does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1232,7 +1222,7 @@ void BITWISENOT(Process *proc)
   }
   else
   {
-    Serial.println(F("BITWISENOT does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1253,7 +1243,7 @@ void TOCHAR(Process *proc)
   }
   else
   {
-    Serial.println(F("TOCHAR does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1274,7 +1264,7 @@ void TOINT(Process *proc)
   }
   else
   {
-    Serial.println(F("TOINT does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1295,7 +1285,7 @@ void TOFLOAT(Process *proc)
   }
   else
   {
-    Serial.println(F("TOFLOAT does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1324,7 +1314,7 @@ void ROUND(Process *proc)
   }
   else
   {
-    Serial.println(F("ROUND does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1353,7 +1343,7 @@ void FLOOR(Process *proc)
   }
   else
   {
-    Serial.println(F("FLOOR does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1382,7 +1372,7 @@ void CEILING(Process *proc)
   }
   else
   {
-    Serial.println(F("CEILING does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1403,7 +1393,7 @@ void MIN(Process *proc)
     }
     else
     {
-      Serial.println(F("MIN does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -1418,7 +1408,7 @@ void MIN(Process *proc)
     }
     else
     {
-      Serial.println(F("MIN does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -1433,13 +1423,13 @@ void MIN(Process *proc)
     }
     else
     {
-      Serial.println(F("MIN does not support two different types"));
+
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("MIN does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1460,7 +1450,7 @@ void MAX(Process *proc)
     }
     else
     {
-      Serial.println(F("MAX does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -1475,7 +1465,7 @@ void MAX(Process *proc)
     }
     else
     {
-      Serial.println(F("MAX does not support two different types"));
+
       STOP(proc);
     }
   }
@@ -1490,13 +1480,12 @@ void MAX(Process *proc)
     }
     else
     {
-      Serial.println(F("MAX does not support two different types"));
       STOP(proc);
     }
   }
   else
   {
-    Serial.println(F("MAX does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1522,7 +1511,6 @@ void ABS(Process *proc)
   }
   else
   {
-    Serial.println(F("ABS does not support this type"));
     STOP(proc);
   }
 }
@@ -1560,7 +1548,6 @@ void CONSTRAIN(Process *proc)
   }
   else
   {
-    Serial.println(F("CONSTRAIN does not support this type"));
     STOP(proc);
   }
 }
@@ -1601,7 +1588,7 @@ void MAP(Process *proc)
   }
   else
   {
-    Serial.println(F("MAP does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1633,7 +1620,7 @@ void POW(Process *proc)
   }
   else
   {
-    Serial.println(F("POW does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1661,7 +1648,6 @@ void SQ(Process *proc)
   }
   else
   {
-    Serial.println(F("SQ does not support this type"));
     STOP(proc);
   }
 }
@@ -1676,7 +1662,7 @@ void SQRT(Process *proc)
 
     if (val < 0)
     {
-      Serial.println(F("SQRT does not support negative values"));
+
       STOP(proc);
       return;
     }
@@ -1690,7 +1676,7 @@ void SQRT(Process *proc)
 
     if (val < 0)
     {
-      Serial.println(F("SQRT does not support negative values"));
+
       STOP(proc);
       return;
     }
@@ -1704,7 +1690,7 @@ void SQRT(Process *proc)
 
     if (val < 0)
     {
-      Serial.println(F("SQRT does not support negative values"));
+
       STOP(proc);
       return;
     }
@@ -1714,7 +1700,7 @@ void SQRT(Process *proc)
   }
   else
   {
-    Serial.println(F("SQRT does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1778,7 +1764,7 @@ void DELAYUNTIL(Process *proc)
   }
   else
   {
-    Serial.println(F("DELAYUNTIL does not support this type"));
+
     STOP(proc);
   }
 }
@@ -1954,78 +1940,53 @@ void DIGITALREAD(Process *proc)
 void DIGITALWRITE(Process *proc)
 {
   char type1 = PeekType(&(proc->stack));
-  char type2;
 
-  if (type1 == 'c')
-  {
-    char pin = PopChar(&(proc->stack));
-    type2 = PeekType(&(proc->stack));
-    if (type2 == 'c')
-    {
-      char value = PopChar(&(proc->stack));
-      digitalWrite(pin, value);
-    }
-    else
-    {
-      STOP(proc);
-    }
-  }
-  else if (type1 == 'i')
-  {
-    int pin = PopInt(&(proc->stack));
-    type2 = PeekType(&(proc->stack));
-    if (type2 == 'i')
-    {
-      int value = PopInt(&(proc->stack));
-      digitalWrite(pin, value);
-    }
-    else
-    {
-      STOP(proc);
-    }
-  }
-  else if (type1 == 'f')
-  {
-    int pin = (int)PopFloat(&(proc->stack));
-    type2 = PeekType(&(proc->stack));
-    if (type2 == 'f')
-    {
-      int value = PopInt(&(proc->stack));
-      digitalWrite(pin, value);
-    }
-    else
-    {
-      STOP(proc);
-    }
-  }
-  else
+  if (type1 != 'c' && type1 != 'i' && type1 != 'f')
   {
     STOP(proc);
+    return;
   }
+
+  int pin = (type1 == 'c') ? PopChar(&(proc->stack)) : (type1 == 'i') ? PopInt(&(proc->stack))
+                                                                      : (int)PopFloat(&(proc->stack));
+
+  char type2 = PeekType(&(proc->stack));
+  if (type2 != type1)
+  {
+    STOP(proc);
+    return;
+  }
+
+  int value = (type2 == 'c') ? PopChar(&(proc->stack)) : (type2 == 'i') ? PopInt(&(proc->stack))
+                                                                        : (int)PopFloat(&(proc->stack));
+
+  digitalWrite(pin, value);
 }
 
 void PRINT(Process *proc)
 {
   char type = PeekType(&(proc->stack));
-  if (type == 'c')
+  switch (type)
   {
+  case 'c':
     Serial.print(PopChar(&(proc->stack)));
-  }
-  else if (type == 'i')
-  {
+    break;
+  case 'i':
     Serial.print(PopInt(&(proc->stack)));
-  }
-  else if (type == 'f')
-  {
+    break;
+  case 'f':
     Serial.print(PopFloat(&(proc->stack)));
-  }
-  else if (type == 's')
+    break;
+  case 's':
   {
     char *printString = PopString(&(proc->stack));
-
     Serial.print(printString);
-
     delete[] printString;
+    break;
+  }
+  default:
+    STOP(proc);
+    break;
   }
 }
 
@@ -2037,73 +1998,51 @@ void PRINTLN(Process *proc)
 
 void OPEN(Process *proc)
 {
-  char type = PeekType(&(proc->stack));
-
-  if (type == 's')
+  Serial.println("Open function");
+  if (PeekType(&(proc->stack)) != 's')
   {
-    char *data = PopString(&(proc->stack));
-    char type2 = PeekType(&(proc->stack));
-
-    if (type2 == 'i')
-    {
-      short len = PopInt(&(proc->stack));
-      Serial.println(len);
-
-      uint8_t fatIndex = FindEntryByFilename(data);
-
-      if (fatIndex == -1)
-      {
-        if (FileFreespace() >= len)
-        {
-          FATEntry newEntry;
-
-          strcpy(newEntry.name, data);
-          newEntry.position = FindSpaceAddress(len);
-          newEntry.length = len;
-
-          WriteFatEntry(noOfFiles, &newEntry);
-
-          proc->fp = newEntry.position;
-        }
-      }
-      else
-      {
-        FATEntry *fat = ReadFatEntry(fatIndex);
-
-        proc->fp = fat->position;
-      }
-    }
-    else if (type2 == 'c')
-    {
-      char len = PopChar(&(proc->stack));
-
-      uint8_t fatIndex = FindEntryByFilename(data);
-
-      if (fatIndex == -1)
-      {
-        if (FileFreespace() >= len)
-        {
-          FATEntry newEntry;
-
-          strcpy(newEntry.name, data);
-          newEntry.position = FindSpaceAddress(len);
-          newEntry.length = len;
-
-          WriteFatEntry(noOfFiles, &newEntry);
-
-          proc->fp = newEntry.position;
-        }
-      }
-      else
-      {
-        FATEntry *fat = ReadFatEntry(fatIndex);
-
-        proc->fp = fat->position;
-      }
-    }
-
-    delete[] data;
+    STOP(proc);
+    return;
   }
+
+  char *data = PopString(&(proc->stack));
+  char type2 = PeekType(&(proc->stack));
+  int len = (type2 == 'i') ? PopInt(&(proc->stack)) : (type2 == 'c') ? PopChar(&(proc->stack))
+                                                                     : -1;
+
+  if (len == -1)
+  {
+    delete[] data;
+    STOP(proc);
+    return;
+  }
+
+  int8_t fatIndex = FindEntryByFilename(data);
+  if (fatIndex == -1)
+  {
+    if (FileFreespace() >= len)
+    {
+      FATEntry newEntry;
+      strcpy(newEntry.name, data);
+      newEntry.position = FindSpaceAddress(len);
+      newEntry.length = len;
+      WriteFatEntry(noOfFiles, &newEntry);
+      proc->fp = newEntry.position;
+    }
+    else
+    {
+      delete[] data;
+      STOP(proc);
+    }
+  }
+  else
+  {
+    FATEntry *fat = ReadFatEntry(fatIndex);
+    proc->fp = fat->position;
+    delete fat;
+  }
+
+  delete[] data;
 }
 
 void CLOSE(Process *proc)
@@ -2112,185 +2051,152 @@ void CLOSE(Process *proc)
 
 void WRITE(Process *proc)
 {
+  Serial.println("In Write");
+  Serial.println(proc->fp);
+
   char type = PeekType(&(proc->stack));
-  int length = 0;
-  if (type == 'c')
+  switch (type)
   {
-    length = 1;
-    char data = PopChar(&(proc->stack));
-    EEPROM.put(proc->fp, data);
-    proc->fp++;
-  }
-  else if (type == 'i')
+  case 'c':
+    EEPROM.put(proc->fp++, PopChar(&(proc->stack)));
+    break;
+  case 'i':
   {
     short data = PopInt(&(proc->stack));
-    byte highByte = highByte(data);
-    byte lowByte = lowByte(data);
-    Serial.println((int)highByte);
-    EEPROM.put(proc->fp, highByte);
-    proc->fp++;
-    EEPROM.put(proc->fp, lowByte);
-    proc->fp++;
+    EEPROM.put(proc->fp++, highByte(data));
+    EEPROM.put(proc->fp++, lowByte(data));
+    break;
   }
-  else if (type == 'f')
+  case 'f':
   {
     float data = PopFloat(&(proc->stack));
-
-    uint8_t *floatBytes[4];
-    memcpy(floatBytes, &data, 4);
-
-    for (int i = 0; i < 4; i++)
-    {
-      EEPROM.put(proc->fp, floatBytes);
-      proc->fp++;
-    }
+    EEPROM.put(proc->fp, (uint8_t *)&data);
+    proc->fp += sizeof(float);
+    break;
   }
-  else if (type == 's')
+  case 's':
   {
     char *data = PopString(&(proc->stack));
-    length = strlen(data) + 1;
+    int length = strlen(data) + 1;
     for (int i = 0; i < length; i++)
     {
-      EEPROM.put(proc->fp, data[i]);
-      proc->fp++;
+      EEPROM.put(proc->fp++, data[i]);
     }
-
     delete[] data;
+    break;
   }
-  else
-  {
+  default:
     STOP(proc);
+    break;
   }
 }
 
 void READINT(Process *proc)
 {
-  char highByte = EEPROM.read(proc->fp);
-  proc->fp++;
-  char lowByte = EEPROM.read(proc->fp);
-  proc->fp++;
-  PushInt(&(proc->stack), word(highByte, lowByte));
+  PushInt(&(proc->stack), word(EEPROM.read(proc->fp++), EEPROM.read(proc->fp++)));
 }
 
 void READFLOAT(Process *proc)
 {
-  uint8_t floatBytes[4];
-
-  for (int i = 0; i < 4; i++)
-  {
-    floatBytes[i] = EEPROM.read(proc->fp);
-    proc->fp++;
-  }
-
   float data;
-
-  memcpy(&data, floatBytes, 4);
-
+  EEPROM.get(proc->fp, data);
+  proc->fp += sizeof(float);
   PushFloat(&(proc->stack), data);
 }
 
 void READSTRING(Process *proc)
 {
-  uint8_t *stringData;
-  int stringLength = 0;
+  int length = 0;
+  while (EEPROM.read(proc->fp + length) != '\0')
+    length++;
 
-  while (EEPROM.read(proc->fp + stringLength) != 0)
-  {
-    stringLength++;
-  }
+  char *stringData = new char[length + 1];
 
-  stringData = new uint8_t[stringLength + 1];
-
-  for (int i = 0; i < stringLength + 1; i++)
-  {
+  for (int i = 0; i <= length; i++)
     stringData[i] = EEPROM.read(proc->fp++);
-  }
 
-  PushString(&(proc->stack), (char *)stringData);
-
+  PushString(&(proc->stack), stringData);
   delete[] stringData;
 }
 
 void READCHAR(Process *proc)
 {
-  char data = EEPROM.read(proc->fp);
-  proc->fp++;
-  PushChar(&(proc->stack), data);
+  PushChar(&(proc->stack), EEPROM.read(proc->fp++));
 }
 
 void IF(Process *proc)
 {
-  int jump = EEPROM.read(proc->pc);
-  proc->pc++;
+  int jump = EEPROM.read(proc->pc++);
   char type = PeekType(&(proc->stack));
-  if (type == 'i')
+
+  bool condition = false;
+  switch (type)
   {
-    short data = PopInt(&(proc->stack));
-    if (!data)
-    {
-      proc->pc += jump;
-    }
-    PushInt(&(proc->stack), data);
+  case 'i':
+    condition = PopInt(&(proc->stack));
+    break;
+  case 'f':
+    condition = PopFloat(&(proc->stack));
+    break;
+  case 'c':
+    condition = PopChar(&(proc->stack));
+    break;
+  default:
+    STOP(proc);
+    return;
   }
-  else if (type == 'f')
+
+  if (!condition)
   {
-    float data = PopFloat(&(proc->stack));
-    if (!data)
-    {
-      proc->pc += jump;
-    }
-    PushFloat(&(proc->stack), data);
-  }
-  else if (type == 'c')
-  {
-    char data = PopChar(&(proc->stack));
-    if (!data)
-    {
-      proc->pc += jump;
-    }
-    PushChar(&(proc->stack), data);
+    proc->pc += jump;
   }
   else
   {
-    STOP(proc);
+    // Push the value back as it's part of the condition stack
+    if (type == 'i')
+      PushInt(&(proc->stack), condition);
+    else if (type == 'f')
+      PushFloat(&(proc->stack), condition);
+    else if (type == 'c')
+      PushChar(&(proc->stack), condition);
   }
 }
 
 void ELSE(Process *proc)
 {
-  int jump = EEPROM.read(proc->pc);
-  proc->pc++;
+  int jump = EEPROM.read(proc->pc++);
   char type = PeekType(&(proc->stack));
-  if (type == 'i')
+
+  bool condition = false;
+  switch (type)
   {
-    short data = PopInt(&(proc->stack));
-    if (data)
-    {
-      proc->pc += jump;
-    }
-    PushInt(&(proc->stack), data);
+  case 'i':
+    condition = PopInt(&(proc->stack));
+    break;
+  case 'f':
+    condition = PopFloat(&(proc->stack));
+    break;
+  case 'c':
+    condition = PopChar(&(proc->stack));
+    break;
+  default:
+    STOP(proc);
+    return;
   }
-  else if (type == 'f')
+
+  if (condition)
   {
-    float data = PopFloat(&(proc->stack));
-    if (data)
-    {
-      proc->pc += jump;
-    }
-    PushFloat(&(proc->stack), data);
-  }
-  else if (type == 'c')
-  {
-    char data = PopChar(&(proc->stack));
-    if (data)
-    {
-      proc->pc += jump;
-    }
-    PushChar(&(proc->stack), data);
+    proc->pc += jump;
   }
   else
   {
-    STOP(proc);
+    // Push the value back as it's part of the condition stack
+    if (type == 'i')
+      PushInt(&(proc->stack), condition);
+    else if (type == 'f')
+      PushFloat(&(proc->stack), condition);
+    else if (type == 'c')
+      PushChar(&(proc->stack), condition);
   }
 }
 
@@ -2298,71 +2204,47 @@ void ENDIF(Process *proc)
 {
   char type = PeekType(&(proc->stack));
   if (type == 'i')
-  {
     PopInt(&(proc->stack));
-  }
   else if (type == 'f')
-  {
     PopFloat(&(proc->stack));
-  }
   else if (type == 'c')
-  {
     PopChar(&(proc->stack));
-  }
   else
-  {
     STOP(proc);
-  }
 }
 
 void WHILE(Process *proc)
 {
-  int one = EEPROM.read(proc->pc);
-  proc->pc++;
-  int two = EEPROM.read(proc->pc);
-  proc->pc++;
+  int one = EEPROM.read(proc->pc++);
+  int two = EEPROM.read(proc->pc++);
   int front = two + 1;
   int back = one + two + 4;
   char type = PeekType(&(proc->stack));
-  if (type == 'i')
+
+  bool condition = false;
+  switch (type)
   {
-    int data = PopInt(&(proc->stack));
-    if (!data)
-    {
-      proc->pc += front;
-    }
-    else
-    {
-      proc->lb = back;
-    }
+  case 'i':
+    condition = PopInt(&(proc->stack));
+    break;
+  case 'f':
+    condition = PopFloat(&(proc->stack));
+    break;
+  case 'c':
+    condition = PopChar(&(proc->stack));
+    break;
+  default:
+    STOP(proc);
+    return;
   }
-  else if (type == 'f')
+
+  if (!condition)
   {
-    float data = PopFloat(&(proc->stack));
-    if (!data)
-    {
-      proc->pc += front;
-    }
-    else
-    {
-      proc->lb = back;
-    }
-  }
-  else if (type == 'c')
-  {
-    char data = PopChar(&(proc->stack));
-    if (data == 0)
-    {
-      proc->pc += front;
-    }
-    else
-    {
-      proc->lb = back;
-    }
+    proc->pc += front;
   }
   else
   {
-    STOP(proc);
+    proc->lb = back;
   }
 }
 
@@ -2383,64 +2265,49 @@ void ENDLOOP(Process *proc)
 
 void FORK(Process *proc)
 {
-  char type = PeekType(&(proc->stack));
-  if (type == 's')
+  if (PeekType(&(proc->stack)) != 's')
   {
-    char *data = PopString(&(proc->stack));
-    int fileIndex = FindEntryByFilename(data);
-
-    if (fileIndex == -1)
-    {
-      Serial.println(F("File does not exist"));
-      STOP(proc);
-      return;
-    }
-    else
-    {
-      FATEntry *FATEntry = ReadFatEntry(fileIndex);
-
-      Process forkProcess;
-
-      strcpy(forkProcess.name, data);
-      forkProcess.pc = FATEntry->position;
-
-      AddProcess(&forkProcess);
-
-      PushInt(&(proc->stack), forkProcess.id);
-    }
-    delete[] data;
-  }
-  else
-  {
-    Serial.println(F("ERROR: FORK NOT SUPPORTED FOR TYPE"));
     STOP(proc);
+    return;
   }
+
+  char *data = PopString(&(proc->stack));
+  int fileIndex = FindEntryByFilename(data);
+  delete[] data;
+
+  if (fileIndex == -1)
+  {
+    STOP(proc);
+    return;
+  }
+
+  FATEntry *FATEntry = ReadFatEntry(fileIndex);
+  Process forkProcess;
+  strcpy(forkProcess.name, data);
+  forkProcess.pc = FATEntry->position;
+  delete FATEntry;
+
+  AddProcess(&forkProcess);
+  PushInt(&(proc->stack), forkProcess.id);
 }
 
 void WAITUNTILDONE(Process *proc)
 {
-  char type = PeekType(&(proc->stack));
-  if (type == 'i')
-  {
-    int data = PopInt(&(proc->stack));
-
-    Process *forkProcess = GetProcess(data);
-
-    if (!forkProcess)
-    {
-      return;
-    }
-    else
-    {
-      if (forkProcess->state != 0)
-      {
-        PushInt(&(proc->stack), data);
-        proc->pc--;
-      }
-    }
-  }
-  else
+  if (PeekType(&(proc->stack)) != 'i')
   {
     STOP(proc);
+    return;
+  }
+
+  int data = PopInt(&(proc->stack));
+  Process *forkProcess = GetProcess(data);
+
+  if (!forkProcess)
+    return;
+
+  if (forkProcess->state != 0)
+  {
+    PushInt(&(proc->stack), data);
+    proc->pc--;
   }
 }

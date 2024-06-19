@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#define STACK_SIZE 30
+#define STACK_SIZE 15
 
 typedef struct Stack {
     uint8_t bytes[STACK_SIZE];

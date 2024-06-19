@@ -67,9 +67,12 @@ char PopChar(Stack *stack)
 
 int PopInt(Stack *stack)
 {
-    PopByte(stack);
+    auto type = PopByte(stack);
 
-    return word(PopByte(stack), PopByte(stack));
+    auto high = PopByte(stack);
+    auto low = PopByte(stack);
+
+    return word(high, low);
 }
 
 float PopFloat(Stack *stack)
@@ -78,6 +81,7 @@ float PopFloat(Stack *stack)
     byte b[4];
 
     PopByte(stack);
+
     for (int i = 0; i < sizeof(float); i++)
     {
         b[i] = PopByte(stack);
@@ -95,8 +99,8 @@ char* PopString(Stack* stack)
     int length = PopByte(stack);
     char* string = new char[length];
 
-    for(int i = 0; i < length; i++) {
-        string[i] = (char) PopByte(stack);
+    for(int i = length - 1; i >= 0; i--) {
+        string[i] = PopByte(stack);
     }
 
     return string;

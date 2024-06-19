@@ -40,18 +40,21 @@ void Store()
     if (fileSize <= 0)
     {
         Serial.println(F("ERR: Size must be > 0"));
+        delete [] fileData;
         return;
     }
 
     if (findIndex != -1)
     {
         Serial.println(F("ERR: File already exist"));
+        delete [] fileData;
         return;
     }
 
     if (FileFreespace() < fileSize)
     {
         Serial.println(F("ERR: No space left"));
+        delete [] fileData;
         return;
     }
 
@@ -65,6 +68,8 @@ void Store()
 
     WriteFatEntry(noOfFiles, &newFileEntry);
     WriteFatData(newFileStartAddress, fileData, fileSize);
+
+    delete [] fileData;
 
     Serial.print(F("File is saved"));
 }
@@ -99,6 +104,7 @@ void Retrieve()
         Serial.print(F(" "));
     }
 
+    delete fileFAT;
     delete[] fileData;
 }
 
@@ -185,6 +191,8 @@ void Run()
 
     strcpy(startProcess.name, inputFilename);
     startProcess.pc = fileEntry->position;
+
+    delete fileEntry;
 
     AddProcess(&startProcess);
 

@@ -1,5 +1,7 @@
 #include "ram.h"
 
+static int noOfVars = 0;
+
 int memoryAddressComperator(const void *a, const void *b)
 {
     Memory *memA = (Memory *)a;
@@ -20,15 +22,14 @@ void StoreVariable(uint8_t name, uint8_t id, Stack *stack)
     {
         auto tempMemorySlot = &(memoryMapping[i]);
 
-        if (tempMemorySlot->id != id && tempMemorySlot->name == name)
+        if (tempMemorySlot->id == id && tempMemorySlot->name == name)
         {
-            memoryMapping[index] = memorySlots[i];
-
-            index++;
+            Serial.println("Found a duplicate");
+            noOfVars--;
             continue;
         }
 
-        noOfVars--;
+        memoryMapping[index++] = *tempMemorySlot;
     }
 
     if (noOfVars == MEMORY_SLOTS)
@@ -41,18 +42,22 @@ void StoreVariable(uint8_t name, uint8_t id, Stack *stack)
     uint8_t size = 0;
     uint8_t *data;
 
-    switch (type)
+    switch ((char)type)
     {
     case 'c':
+    {
         auto stackChar = PopChar(stack);
-        size = sizeof(stackChar);
 
+        size = sizeof(stackChar);
         data = new uint8_t[size];
         data[0] = stackChar;
 
         break;
+    }
     case 'i':
+    {
         auto stackInteger = PopInt(stack);
+
         size = sizeof(stackInteger);
         data = new uint8_t[size];
 
@@ -60,16 +65,22 @@ void StoreVariable(uint8_t name, uint8_t id, Stack *stack)
         data[1] = lowByte(stackInteger);
 
         break;
+    }
     case 'f':
+    {
         auto stackFloat = PopFloat(stack);
+
         size = sizeof(stackFloat);
         data = new uint8_t[size];
 
         memcpy(data, &stackFloat, sizeof(stackFloat));
 
         break;
+    }
     case 's':
+    {
         auto stackString = PopString(stack);
+
         size = strlen(stackString) + 1;
         data = new uint8_t[size];
 
@@ -78,9 +89,10 @@ void StoreVariable(uint8_t name, uint8_t id, Stack *stack)
             data[i] = stackString[i];
         }
 
-        delete [] stackString;
-        
+        delete[] stackString;
+
         break;
+    }
     }
 
     qsort(memoryMapping, noOfVars, sizeof(Memory), memoryAddressComperator);
@@ -113,52 +125,69 @@ void StoreVariable(uint8_t name, uint8_t id, Stack *stack)
     newMemorySlot.size = size;
     newMemorySlot.address = address;
 
-    memoryMapping[noOfVars] = newMemorySlot;
+    memoryMapping[noOfVars++] = newMemorySlot;
 
-    memcpy(&(memoryMapping[address]), data, size);
+    memcpy(&(RAM[address]), data, size);
+
+    delete[] data;
 }
 
 void RetrieveVariable(uint8_t name, uint8_t id, Stack *stack)
 {
-    Memory *memorySlot;
+    Memory *memorySlot = nullptr;
 
     for (int i = 0; i < noOfVars; i++)
     {
         auto tempMemorySlot = &(memoryMapping[i]);
 
-        if (tempMemorySlot->name == name && tempMemorySlot->id)
+        if (tempMemorySlot->name == name && tempMemorySlot->id == id)
         {
             memorySlot = tempMemorySlot;
             break;
         }
     }
 
+    if(memorySlot == nullptr) {
+        Serial.println(F("Entry not found"));
+        return;
+    }
+
     uint8_t *data = new uint8_t[memorySlot->size];
 
     for (int i = 0; i < memorySlot->size; i++)
     {
-        data[i] = RAM[memoryMapping->address + i];
+        data[i] = RAM[memorySlot->address + i];
     }
 
     switch (memorySlot->type)
     {
-    case 'c':
-        PushChar(stack, data[0]);
-        break;
-    case 'i':
-        PushInt(stack, word(data[0], data[1]));
-        break;
-    case 'f':
-        float f;
-        memcpy(&f, data, 4);
-        PushFloat(stack, f);
-        break;
-    case 's':
-        PushString(stack, (char *)data);
-        break;
-    default:
-        Serial.println(F("Variable is not present"));
-        break;
+        case 'c':
+        {
+            PushChar(stack, data[0]);
+            break;
+        }
+        case 'i':
+        {
+            PushInt(stack, word(data[0], data[1]));
+            break;
+        }
+        case 'f':
+        {
+            float f;
+            memcpy(&f, data, sizeof(float));
+            PushFloat(stack, f);
+            break;
+        }
+        case 's':
+        {
+            PushString(stack, (char *)data);
+            break;
+        }
+        default:
+        {
+            Serial.println(F("Variable is not present"));
+            break;
+        }
     }
 
     delete[] data;
