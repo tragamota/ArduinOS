@@ -163,14 +163,12 @@ void STRING(Process *proc)
 
 void SET(Process *proc)
 {
-  uint8_t name = EEPROM.read(proc->pc++);
-  StoreVariable(name, proc->id, &(proc->stack));
+  StoreVariable(EEPROM.read(proc->pc++), proc->id, &(proc->stack));
 }
 
 void GET(Process *proc)
 {
-  uint8_t name = EEPROM.read(proc->pc++);
-  RetrieveVariable(name, proc->id, &(proc->stack));
+  RetrieveVariable(EEPROM.read(proc->pc++), proc->id, &(proc->stack));
 }
 
 void INCREMENT(Process *proc)
@@ -244,6 +242,7 @@ void PLUS(Process *proc)
   {
     int data1 = PopInt(&(proc->stack));
     type2 = PeekType(&(proc->stack));
+    
     if (type2 == 'i')
     {
       int data2 = PopInt(&(proc->stack));
@@ -259,6 +258,7 @@ void PLUS(Process *proc)
   {
     float data1 = PopFloat(&(proc->stack));
     type2 = PeekType(&(proc->stack));
+    
     if (type2 == 'f')
     {
       float data2 = PopFloat(&(proc->stack));
@@ -2033,6 +2033,7 @@ void OPEN(Process *proc)
     {
       delete[] data;
       STOP(proc);
+      return;
     }
   }
   else
